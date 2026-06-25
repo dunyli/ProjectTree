@@ -91,11 +91,31 @@ void map_clear(Map* map) {
 }
 
 /*
- * Итерация по всем элементам словаря
+ * Итерация по всем элементам словаря с передачей пользовательских данных
  * Для каждого элемента вызывается callback
  */
-void map_for_each(Map* map, void (*callback)(const char* key, int value)) {
-    rb_inorder(map->tree, callback);
+void map_for_each(Map* map, void (*callback)(const char* key, int value, void* user_data), void* user_data) {
+    rb_inorder(map->tree, callback, user_data);
+}
+
+/*
+ * Структура для передачи данных при печати
+ */
+typedef struct {
+    bool first;
+} PrintData;
+
+/*
+ * Функция обратного вызова для печати одного элемента
+ */
+static void print_callback(const char* key, int value, void* user_data) {
+    PrintData* data = (PrintData*)user_data;
+
+    if (!data->first) {
+        printf(", ");
+    }
+    printf("\"%s\":%d", key, value);
+    data->first = false;
 }
 
 /*
@@ -104,12 +124,9 @@ void map_for_each(Map* map, void (*callback)(const char* key, int value)) {
 void map_print(Map* map) {
     printf("Словарь (size=%d): {", map_size(map));
 
-    bool first = true;
-    map_for_each(map, (void (*)(const char*, int))(void*)({
-        if (!first) printf(", ");
-        printf("\"%s\":%d", key, value);
-        first = false;
-        }));
+    PrintData data;
+    data.first = true;
+    map_for_each(map, print_callback, &data);
 
     printf("}\n");
 }

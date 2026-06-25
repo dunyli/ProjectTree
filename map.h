@@ -32,8 +32,8 @@ bool map_is_empty(Map* map);
 /* Очистка словаря */
 void map_clear(Map* map);
 
-/* Итерация по всем элементам */
-void map_for_each(Map* map, void (*callback)(const char* key, int value));
+/* Итерация по всем элементам с передачей пользовательских данных */
+void map_for_each(Map* map, void (*callback)(const char* key, int value, void* user_data), void* user_data);
 
 /* Печать содержимого */
 void map_print(Map* map);

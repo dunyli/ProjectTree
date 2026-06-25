@@ -57,7 +57,7 @@ void rb_print_node(RBNode* node, int level, const char* side);
 /* Получение размера */
 int rb_size(RBTree* tree);
 
-/* Обход дерева */
-void rb_inorder(RBTree* tree, void (*callback)(const char* key, int value));
+/* Обход дерева с передачей пользовательских данных */
+void rb_inorder(RBTree* tree, void (*callback)(const char* key, int value, void* user_data), void* user_data);
 
 #endif /* RBTREE_H */

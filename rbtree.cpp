@@ -320,10 +320,31 @@ void rb_transplant(RBTree* tree, RBNode* u, RBNode* v) {
  * Исправляет двойную чёрную высоту
  */
 void rb_delete_fixup(RBTree* tree, RBNode* node) {
-    while (node != tree->root && (node == NULL || node->color == BLACK)) {
+    /* Если node == NULL, то это особый случай - удаление листа */
+    if (node == NULL) {
+        /* Если дерево не пустое, корень должен быть чёрным */
+        if (tree->root != NULL) {
+            tree->root->color = BLACK;
+        }
+        return;
+    }
+
+    while (node != tree->root && node->color == BLACK) {
+        /* Проверяем, что parent существует */
+        if (node->parent == NULL) {
+            break;  /* Защита от неожиданного NULL */
+        }
+
         if (node == node->parent->left) {
             /* Узел — левый потомок */
             RBNode* sibling = node->parent->right;
+
+            /* Проверяем, что sibling существует */
+            if (sibling == NULL) {
+                /* Если брата нет, просто поднимаемся вверх */
+                node = node->parent;
+                continue;
+            }
 
             if (sibling->color == RED) {
                 /* Случай 1: Брат красный */
@@ -331,6 +352,12 @@ void rb_delete_fixup(RBTree* tree, RBNode* node) {
                 node->parent->color = RED;
                 rb_rotate_left(tree, node->parent);
                 sibling = node->parent->right;
+
+                /* Проверяем, что sibling существует после поворота */
+                if (sibling == NULL) {
+                    node = node->parent;
+                    continue;
+                }
             }
 
             if ((sibling->left == NULL || sibling->left->color == BLACK) &&
@@ -348,6 +375,12 @@ void rb_delete_fixup(RBTree* tree, RBNode* node) {
                     sibling->color = RED;
                     rb_rotate_right(tree, sibling);
                     sibling = node->parent->right;
+
+                    /* Проверяем, что sibling существует после поворота */
+                    if (sibling == NULL) {
+                        node = node->parent;
+                        continue;
+                    }
                 }
 
                 /* Случай 4: Правый племянник красный */
@@ -364,12 +397,23 @@ void rb_delete_fixup(RBTree* tree, RBNode* node) {
             /* Узел — правый потомок (симметричный случай) */
             RBNode* sibling = node->parent->left;
 
+            /* Проверяем, что sibling существует */
+            if (sibling == NULL) {
+                node = node->parent;
+                continue;
+            }
+
             if (sibling->color == RED) {
                 /* Случай 1: Брат красный */
                 sibling->color = BLACK;
                 node->parent->color = RED;
                 rb_rotate_right(tree, node->parent);
                 sibling = node->parent->left;
+
+                if (sibling == NULL) {
+                    node = node->parent;
+                    continue;
+                }
             }
 
             if ((sibling->left == NULL || sibling->left->color == BLACK) &&
@@ -387,6 +431,11 @@ void rb_delete_fixup(RBTree* tree, RBNode* node) {
                     sibling->color = RED;
                     rb_rotate_left(tree, sibling);
                     sibling = node->parent->left;
+
+                    if (sibling == NULL) {
+                        node = node->parent;
+                        continue;
+                    }
                 }
 
                 /* Случай 4: Левый племянник красный */
@@ -457,7 +506,16 @@ bool rb_delete(RBTree* tree, const char* key) {
 
     /* Если удалённый узел был чёрным, нужно восстановить баланс */
     if (y_original_color == BLACK) {
-        rb_delete_fixup(tree, x);
+        /* Если x == NULL, это особый случай */
+        if (x == NULL) {
+            /* Если удалили чёрный лист, нужно проверить корень */
+            if (tree->root != NULL) {
+                tree->root->color = BLACK;
+            }
+        }
+        else {
+            rb_delete_fixup(tree, x);
+        }
     }
 
     return true;
@@ -471,22 +529,21 @@ int rb_size(RBTree* tree) {
 }
 
 /*
- * Рекурсивный обход дерева в прямом порядке (in-order)
- * Вызывает callback для каждого узла
+ * Рекурсивный обход дерева с передачей пользовательских данных
  */
-void rb_inorder_recursive(RBNode* node, void (*callback)(const char* key, int value)) {
+static void rb_inorder_recursive(RBNode* node, void (*callback)(const char* key, int value, void* user_data), void* user_data) {
     if (!node) return;
 
-    rb_inorder_recursive(node->left, callback);
-    callback(node->key, node->value);
-    rb_inorder_recursive(node->right, callback);
+    rb_inorder_recursive(node->left, callback, user_data);
+    callback(node->key, node->value, user_data);
+    rb_inorder_recursive(node->right, callback, user_data);
 }
 
 /*
- * Обход дерева в прямом порядке (in-order)
+ * Обход дерева с передачей пользовательских данных
  */
-void rb_inorder(RBTree* tree, void (*callback)(const char* key, int value)) {
-    rb_inorder_recursive(tree->root, callback);
+void rb_inorder(RBTree* tree, void (*callback)(const char* key, int value, void* user_data), void* user_data) {
+    rb_inorder_recursive(tree->root, callback, user_data);
 }
 
 /*
