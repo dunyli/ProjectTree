@@ -140,6 +140,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ProjectTree.cpp" />
+    <ClCompile Include="rbtree.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="map.h" />
